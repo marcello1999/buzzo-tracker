@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BUZZO Tracker</title>
+<meta name="description" content="Traccia ogni giorno le attività che vuoi monitorare.">
+<meta name="theme-color" content="#fafafa">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tracker">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Michroma&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="top">
+  <span class="logo"><span><span class="b">B</span>UZZO</span><span class="cursor"></span></span>
+  <span class="top-sub">Tracker</span>
+</header>
+
+<main id="view"></main>
+
+<nav class="tabs" aria-label="Sezioni">
+  <button type="button" data-tab="today">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/></svg>
+    Oggi
+  </button>
+  <button type="button" data-tab="stats">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>
+    Statistiche
+  </button>
+  <button type="button" data-tab="activities">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    Attività
+  </button>
+</nav>
+
+<dialog id="sheet"></dialog>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
