@@ -189,6 +189,32 @@ test('store: una copia messa da parte non viene sovrascritta da una seconda lett
   assert.equal(storage.map.get(`${STORAGE_KEY}-illeggibile`), '{rotto');
 });
 
+test('store: elenco del giorno con prima le attività fatte', () => {
+  const storage = memoryStorage();
+  let day = '2026-11-01';
+  const store = createStore(storage, () => day);
+  const palestra = store.add({ name: 'Palestra', icon: '🏋️', weeklyGoal: 3 });
+  const lettura = store.add({ name: 'Lettura', icon: '📖', weeklyGoal: null });
+  const pausa = store.add({ name: 'Piscina', icon: '🏊', weeklyGoal: null });
+  day = '2026-11-10';
+  const nuova = store.add({ name: 'Studio', icon: '📚', weeklyGoal: null });
+
+  store.toggle(lettura.id, '2026-11-05');
+  store.toggle(pausa.id, '2026-11-05');
+  store.setPaused(pausa.id, true);
+  store.toggle(nuova.id, '2026-11-05'); // spunta registrata prima della creazione
+
+  const view = (key) => store.dayEntries(key).map((e) => `${e.activity.name}:${e.done ? 'si' : 'no'}`);
+
+  // Fatte prima; la pausa compare perché fatta; Studio perché spuntato.
+  assert.deepEqual(view('2026-11-05'), ['Lettura:si', 'Piscina:si', 'Studio:si', 'Palestra:no']);
+  // In pausa e non fatta: non compare. Creata dopo: non compare.
+  assert.deepEqual(view('2026-11-06'), ['Palestra:no', 'Lettura:no']);
+  // Prima della creazione di tutte: elenco vuoto.
+  assert.deepEqual(view('2026-10-20'), []);
+  assert.equal(palestra.createdAt, '2026-11-01');
+});
+
 test('validateData: rifiuta identificativi che collidono con proprietà interne', () => {
   const act = (id) => ({ id, name: 'X', icon: '✅', weeklyGoal: null, paused: false, createdAt: TODAY });
   for (const id of ['__proto__', 'constructor', 'toString', 'a b', '']) {

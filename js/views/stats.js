@@ -1,4 +1,4 @@
-import { todayKey, yearOf, monthOf, daysInMonth, formatMonth, fromKey, pad } from '../dates.js';
+import { todayKey, yearOf, monthOf, daysInMonth, formatMonth, formatDay, fromKey, pad } from '../dates.js';
 import {
   weekCount, monthCount, yearCount, monthlyCounts, monthlyAverage,
   dayStreak, weekStreak, goalHitRate, firstDay,
@@ -8,6 +8,32 @@ import { esc } from '../ui.js';
 const MONTH_INITIALS = ['G', 'F', 'M', 'A', 'M', 'G', 'L', 'A', 'S', 'O', 'N', 'D'];
 const WEEKDAYS = ['L', 'M', 'M', 'G', 'V', 'S', 'D'];
 const BAR_MAX_PX = 100; // altezza della barra più alta; lascia spazio alle etichette
+const TICK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
+
+// Riquadro con le attività del giorno selezionato nel calendario.
+function dayPanel(store, key) {
+  const entries = store.dayEntries(key);
+  const done = entries.filter((e) => e.done).length;
+  const rows = entries
+    .map(({ activity: a, done: isDone }) => `
+      <li class="${isDone ? 'done' : ''}">
+        <span class="ico" aria-hidden="true">${esc(a.icon)}</span>
+        <span class="nm">${esc(a.name)}</span>
+        <span class="st" role="img" aria-label="${isDone ? 'fatta' : 'non fatta'}">${isDone ? TICK : ''}</span>
+      </li>`)
+    .join('');
+  return `
+    <div class="card day-panel" aria-live="polite">
+      <div class="dp-head">
+        <h3>${esc(formatDay(key))}</h3>
+        ${entries.length ? `<p>${done} di ${entries.length} fatte</p>` : ''}
+      </div>
+      ${entries.length
+        ? `<ul class="day-list">${rows}</ul>`
+        : '<p class="note">Nessuna attività tracciata in questo giorno.</p>'}
+      ${store.active().length ? '<button type="button" class="btn btn-ghost" data-act="edit-day">Modifica questo giorno</button>' : ''}
+    </div>`;
+}
 
 const fmtAvg = (n) => n.toLocaleString('it-IT', { maximumFractionDigits: 1 });
 const plural = (n, one, many) => (n === 1 ? one : many);
@@ -104,12 +130,19 @@ export function mount(root, { store, state, render, go }) {
     const key = `${prefix}${pad(d)}`;
     const n = perDay.get(key) || 0;
     const lvl = n ? 0.15 + 0.85 * (n / scale) : 0;
-    const cls = ['d', n ? 'on' : '', lvl > 0.55 ? 'strong' : '', key === today ? 'today' : '', key > today ? 'future' : '']
+    const selected = key === state.statsDay;
+    const cls = ['d', n ? 'on' : '', lvl > 0.55 ? 'strong' : '', key === today ? 'today' : '', key > today ? 'future' : '', selected ? 'sel' : '']
       .filter(Boolean)
       .join(' ');
-    const label = isAll && n ? ` aria-label="${d}: ${n} ${plural(n, 'spunta', 'spunte')}"` : n ? ` aria-label="${d}: fatto"` : '';
-    cells += `<div class="${cls}"${n ? ` style="--lvl:${lvl.toFixed(2)}"` : ''}${label}>${d}</div>`;
+    const style = n ? ` style="--lvl:${lvl.toFixed(2)}"` : '';
+    if (key > today) {
+      cells += `<div class="${cls}">${d}</div>`;
+    } else {
+      const what = n ? (isAll ? `${n} ${plural(n, 'spunta', 'spunte')}` : 'fatto') : 'nessuna spunta';
+      cells += `<button type="button" class="${cls}" data-day="${key}" aria-pressed="${selected}" aria-label="${d}: ${what}"${style}>${d}</button>`;
+    }
   }
+  const selDay = state.statsDay && state.statsDay.startsWith(prefix) && state.statsDay <= today ? state.statsDay : null;
   const calAtStart = cal.y < firstYear || (cal.y === firstYear && cal.m === 1);
   const calAtEnd = cal.y > thisYear || (cal.y === thisYear && cal.m >= thisMonth);
 
@@ -137,13 +170,15 @@ export function mount(root, { store, state, render, go }) {
         <button type="button" class="arrow" data-cal="1" aria-label="Mese successivo" ${calAtEnd ? 'disabled' : ''}>›</button>
       </div>
       <div class="cal-grid">${cells}</div>
-    </div>`;
+    </div>
+    ${selDay ? dayPanel(store, selDay) : '<p class="cal-hint">Tocca un giorno per vedere cosa hai fatto.</p>'}`;
 
   root.onchange = (e) => {
     if (e.target.matches('.f-act')) {
       state.statsId = e.target.value || null;
       state.statsYear = null;
       state.statsCal = null;
+      state.statsDay = null;
     } else if (e.target.matches('.f-year')) {
       state.statsYear = Number(e.target.value);
     } else return;
@@ -151,10 +186,25 @@ export function mount(root, { store, state, render, go }) {
   };
 
   root.onclick = (e) => {
+    const dayBtn = e.target.closest('[data-day]');
+    if (dayBtn) {
+      const key = dayBtn.dataset.day;
+      state.statsDay = state.statsDay === key ? null : key;
+      render();
+      root.querySelector(`[data-day="${key}"]`)?.focus({ preventScroll: true });
+      if (state.statsDay) root.querySelector('.day-panel')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      return;
+    }
+    if (e.target.closest('[data-act="edit-day"]')) {
+      state.day = selDay;
+      go('today');
+      return;
+    }
     const btn = e.target.closest('[data-cal]');
     if (!btn || btn.disabled) return;
     const next = new Date(cal.y, cal.m - 1 + Number(btn.dataset.cal), 1);
     state.statsCal = { y: next.getFullYear(), m: next.getMonth() + 1 };
+    state.statsDay = null;
     render();
   };
 }

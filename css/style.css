@@ -209,6 +209,30 @@ main {
 .cal-grid .d.on.strong { color: #f7f5fa; }
 .cal-grid .d.today { box-shadow: inset 0 0 0 2px var(--oro-scuro); }
 .cal-grid .d.future { opacity: 0.35; }
+.cal-grid button.d { width: 100%; cursor: pointer; }
+.cal-grid .d.sel { outline: 2px solid var(--viola); outline-offset: 1px; }
+
+.cal-hint { font-size: 13px; color: var(--testo-soft); text-align: center; margin-top: 10px; }
+.day-panel {
+  margin-top: 10px; padding: 14px 16px 16px;
+  scroll-margin-bottom: calc(var(--tabs-h) + var(--safe-b) + 16px);
+}
+.dp-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.dp-head h3 { font-size: 15.5px; font-weight: 600; color: var(--viola); }
+.dp-head p { font-size: 13px; color: var(--testo-soft); white-space: nowrap; }
+.day-list { list-style: none; margin-bottom: 14px; }
+.day-list li { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--bordo); }
+.day-list li:last-child { border-bottom: 0; }
+.day-list .ico { flex: none; width: 28px; font-size: 20px; text-align: center; }
+.day-list .nm { flex: 1; min-width: 0; font-size: 15.5px; overflow-wrap: anywhere; }
+.day-list .st {
+  flex: none; width: 24px; height: 24px; border-radius: 50%;
+  border: 2px solid var(--bordo); display: grid; place-items: center;
+}
+.day-list .st svg { width: 14px; height: 14px; fill: none; stroke: var(--oro); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.day-list li.done .st { background: var(--viola); border-color: var(--viola); }
+.day-list li:not(.done) .ico, .day-list li:not(.done) .nm { opacity: 0.5; }
+.day-panel .note { margin: 4px 0 14px; }
 
 /* ---------- Attività ---------- */
 .acts { list-style: none; display: grid; gap: 10px; }

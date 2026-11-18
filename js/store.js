@@ -88,6 +88,15 @@ export function createStore(storage, today = todayKey) {
     allDates: () => data.activities.flatMap((a) => data.checks[a.id] || []),
     isChecked: (id, key) => (data.checks[id] || []).includes(key),
 
+    // Attività di un giorno, prima le fatte. Compaiono quelle fatte quel giorno
+    // e quelle attive già esistenti; le altre non riguardano quella data.
+    dayEntries(key) {
+      const entries = data.activities
+        .map((activity) => ({ activity, done: (data.checks[activity.id] || []).includes(key) }))
+        .filter(({ activity, done }) => done || (!activity.paused && activity.createdAt <= key));
+      return [...entries.filter((e) => e.done), ...entries.filter((e) => !e.done)];
+    },
+
     add(fields) {
       const activity = {
         id: `a${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
