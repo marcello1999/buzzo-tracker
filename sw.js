@@ -26,7 +26,13 @@ const SHELL = [
 const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));
+  // `reload` scavalca la copia del browser: la cache offline parte dai file appena pubblicati.
+  event.waitUntil(
+    caches
+      .open(CACHE)
+      .then((cache) => cache.addAll(SHELL.map((url) => new Request(url, { cache: 'reload' }))))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (event) => {
@@ -63,7 +69,10 @@ self.addEventListener('fetch', (event) => {
       .then((hit) => hit || (request.mode === 'navigate' ? caches.match('index.html') : undefined));
 
   // Risposta di rete valida, altrimenti la copia in cache (anche per errori del server).
-  const network = fetch(request)
+  // `no-cache` chiede sempre al server se il file è cambiato, invece di riusare per
+  // 10 minuti la copia del browser: così un aggiornamento arriva alla prima riapertura.
+  // Se il file non è cambiato il server risponde senza rimandarlo, quindi resta leggero.
+  const network = fetch(request, { cache: 'no-cache' })
     .then((res) => (res.ok ? store(request, res) : fromCache().then((hit) => hit || res)))
     .catch(() => fromCache().then((hit) => hit || Response.error()));
 
